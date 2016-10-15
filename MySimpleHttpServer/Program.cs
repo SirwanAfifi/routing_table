@@ -40,11 +40,7 @@ namespace MySimpleHttpServer
                 var response = context.Response;
                 var request = context.Request;
 
-                
-                
-
                 var res = router.Direct(request.Url.AbsolutePath);
-                
 
                 byte[] buffer = Encoding.UTF8.GetBytes(res);
                 response.ContentLength64 = buffer.Length;
@@ -59,7 +55,7 @@ namespace MySimpleHttpServer
     public class Router
     {
         private Dictionary<string, string> _routes;
-        private readonly Regex _matchIdPattern = new Regex("{\\d+}");
+        private readonly Regex _parameter = new Regex("\\d+");
 
         public void Define(Dictionary<string, string> routes)
         {
@@ -68,21 +64,29 @@ namespace MySimpleHttpServer
 
         public string Direct(string uri)
         {
-            if (_routes.ContainsKey(uri) && uri != "/favicon.ico")
+            var originalUri = Regex.Replace(uri, "\\d+", "{id}");
+
+            if (_routes.ContainsKey(originalUri) && uri != "/favicon.ico")
             {
-                var myUri = _routes[uri].Split('@');
+                var myUri = _routes[originalUri].Split('@');
                 var controller = myUri[0];
                 var action = myUri[1];
+                var parameter = uri.Split('/').Skip(1).LastOrDefault();
                 var _namespace = nameof(MySimpleHttpServer) + "." + controller;
                 var type = Type.GetType(_namespace);
+                
                 if (type != null)
                 {
                     var method = type.GetMethod(action);
-                    var res = method?.Invoke(null, null);
-                    return (string)res;
+                    if (parameter != null)
+                    {
+                        var res = !_parameter.Match(parameter).Success ? 
+                            method?.Invoke(null, null) : method?.Invoke(null, new object[] { int.Parse(parameter) });
+                        return (string)res;
+                    }
                 }
                 return "The action method or controller not found.";
-            } 
+            }
 
             return "No route defined for this URI.";
         }
@@ -92,7 +96,7 @@ namespace MySimpleHttpServer
     {
         public static string Index()
         {
-            return "<h1>Home Page</h1>";
+            return "Index";
         }
     }
 
@@ -100,7 +104,16 @@ namespace MySimpleHttpServer
     {
         public static string Index()
         {
-            return "Hello I am an action method";
+            return "Index";
+        }
+
+        public static string Details(int id)
+        {
+            string page = Path.GetDirectoryName(Path.GetDirectoryName(Directory.GetCurrentDirectory())) +
+                $"\\Views\\{nameof(PostsController).Replace("Controller", "")}\\{nameof(Details)}.html";
+            TextReader tr = new StreamReader(page);
+            string msg = tr.ReadToEnd();
+            return msg;
         }
     }
 }
