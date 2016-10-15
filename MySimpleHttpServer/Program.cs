@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Security;
+using System.Security.Permissions;
+using System.Security.Policy;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace MySimpleHttpServer
 {
@@ -13,6 +14,9 @@ namespace MySimpleHttpServer
     {
         static void Main(string[] args)
         {
+
+            SwitchToNewAppDomain();
+
 
             // Route table
             var router = new Router();
@@ -25,6 +29,11 @@ namespace MySimpleHttpServer
                 { "/favicon.ico", "Fav icon" }
             });
 
+            StartingServer(router);
+        }
+
+        private static void StartingServer(Router router)
+        {
             // First all of we should grant permissions to the particular URL. e.g.
             // netsh http add urlacl url=http://+:80/MyUri user=DOMAIN\user
             // source: http://stackoverflow.com/a/4115328/1646540
@@ -50,70 +59,28 @@ namespace MySimpleHttpServer
                 context.Response.Close();
             }
         }
-    }
 
-    public class Router
-    {
-        private Dictionary<string, string> _routes;
-        private readonly Regex _parameter = new Regex("\\d+");
-
-        public void Define(Dictionary<string, string> routes)
+        private static bool SwitchToNewAppDomain()
         {
-            _routes = routes;
-        }
-
-        public string Direct(string uri)
-        {
-            var originalUri = Regex.Replace(uri, "\\d+", "{id}");
-
-            if (_routes.ContainsKey(originalUri) && uri != "/favicon.ico")
+            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
             {
-                var myUri = _routes[originalUri].Split('@');
-                var controller = myUri[0];
-                var action = myUri[1];
-                var parameter = uri.Split('/').Skip(1).LastOrDefault();
-                var _namespace = nameof(MySimpleHttpServer) + "." + controller;
-                var type = Type.GetType(_namespace);
-                
-                if (type != null)
-                {
-                    var method = type.GetMethod(action);
-                    if (parameter != null)
-                    {
-                        var res = !_parameter.Match(parameter).Success ? 
-                            method?.Invoke(null, null) : method?.Invoke(null, new object[] { int.Parse(parameter) });
-                        return (string)res;
-                    }
-                }
-                return "The action method or controller not found.";
+                // RazorEngine cannot clean up from the default appdomain...
+                Console.WriteLine("Switching to secound AppDomain, for RazorEngine...");
+                AppDomainSetup adSetup = new AppDomainSetup();
+                adSetup.ApplicationBase = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+                var current = AppDomain.CurrentDomain;
+                // You only need to add strongnames when your appdomain is not a full trust environment.
+                var strongNames = new StrongName[0];
+
+                var domain = AppDomain.CreateDomain(
+                    "MyMainDomain", null,
+                    current.SetupInformation, new PermissionSet(PermissionState.Unrestricted),
+                    strongNames);
+                return true;
             }
-
-            return "No route defined for this URI.";
-        }
-    }
-
-    public class HomeController
-    {
-        public static string Index()
-        {
-            return "Index";
-        }
-    }
-
-    public class PostsController
-    {
-        public static string Index()
-        {
-            return "Index";
-        }
-
-        public static string Details(int id)
-        {
-            string page = Path.GetDirectoryName(Path.GetDirectoryName(Directory.GetCurrentDirectory())) +
-                $"\\Views\\{nameof(PostsController).Replace("Controller", "")}\\{nameof(Details)}.html";
-            TextReader tr = new StreamReader(page);
-            string msg = tr.ReadToEnd();
-            return msg;
+            return false;
         }
     }
 }
+
+

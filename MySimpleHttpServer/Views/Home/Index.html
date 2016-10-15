@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@model List<MySimpleHttpServer.Models.Person>
+<!DOCTYPE html>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -6,6 +7,11 @@
     <title></title>
 </head>
 <body>
-    <h1>Hello I'm the Home page</h1>
+    <h1>Persons</h1>
+    <ul>
+        @foreach (var person in Model) {
+            <li>@person.Name @person.LastName</li>
+        }
+    </ul>
 </body>
 </html>
