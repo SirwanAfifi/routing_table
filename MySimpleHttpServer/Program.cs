@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MySimpleHttpServer
 {
@@ -19,7 +20,8 @@ namespace MySimpleHttpServer
             {
                 { "/", "HomeController@Index" },
                 { "/about", "AboutController@Index" },
-                { "/posts/index", "PostController@Index" },
+                { "/posts", "PostsController@Index" },
+                { "/posts/{id}", "PostsController@Details" },
                 { "/favicon.ico", "Fav icon" }
             });
 
@@ -34,10 +36,9 @@ namespace MySimpleHttpServer
 
             while (true)
             {
-                HttpListenerContext context = server.GetContext();
-                HttpListenerResponse response = context.Response;
-
-                HttpListenerRequest request = context.Request;
+                var context = server.GetContext();
+                var response = context.Response;
+                var request = context.Request;
 
                 
                 
@@ -58,6 +59,7 @@ namespace MySimpleHttpServer
     public class Router
     {
         private Dictionary<string, string> _routes;
+        private readonly Regex _matchIdPattern = new Regex("{\\d+}");
 
         public void Define(Dictionary<string, string> routes)
         {
@@ -68,15 +70,19 @@ namespace MySimpleHttpServer
         {
             if (_routes.ContainsKey(uri) && uri != "/favicon.ico")
             {
-                var myUri = uri.Split('/').Skip(1).ToArray();
-                var controller = uri == "/" ? "HomeController" : myUri[0].FirstCharToUpper() + "Controller";
-                var action = uri == "/" ? "Index" : myUri[1].FirstCharToUpper();
-
-                var type = Type.GetType(nameof(MySimpleHttpServer) + "." + controller);
-                var method = type?.GetMethod(action);
-                var res = method?.Invoke(null, null);
-                return (string)res;
-            }
+                var myUri = _routes[uri].Split('@');
+                var controller = myUri[0];
+                var action = myUri[1];
+                var _namespace = nameof(MySimpleHttpServer) + "." + controller;
+                var type = Type.GetType(_namespace);
+                if (type != null)
+                {
+                    var method = type.GetMethod(action);
+                    var res = method?.Invoke(null, null);
+                    return (string)res;
+                }
+                return "The action method or controller not found.";
+            } 
 
             return "No route defined for this URI.";
         }
@@ -95,16 +101,6 @@ namespace MySimpleHttpServer
         public static string Index()
         {
             return "Hello I am an action method";
-        }
-    }
-
-    public static class StringHelper
-    {
-        public static string FirstCharToUpper(this string input)
-        {
-            if (String.IsNullOrEmpty(input))
-                throw new ArgumentException("ARGH!");
-            return input.First().ToString().ToUpper() + String.Join("", input.Skip(1));
         }
     }
 }
