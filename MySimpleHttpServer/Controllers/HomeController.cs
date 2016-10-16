@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using MySimpleHttpServer.Models;
+﻿using System.Linq;
+using MySimpleHttpServer.Core;
 
 namespace MySimpleHttpServer.Controllers
 {
@@ -7,12 +7,7 @@ namespace MySimpleHttpServer.Controllers
     {
         public static string Index()
         {
-            var model = new List<Person>
-            {
-                new Person { Name = "Sirwan", LastName = "Afifi"},
-                new Person { Name = "Hamed", LastName = "Qaderi"}
-            };
-            return View(nameof(HomeController), nameof(Index), model);
+            return View(nameof(HomeController), nameof(Index), PostDataSource.GetPosts().Take(5));
         }
     }
 }

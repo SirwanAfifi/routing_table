@@ -54,7 +54,8 @@
     <Compile Include="Controller.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\PostsController.cs" />
-    <Compile Include="Models\Person.cs" />
+    <Compile Include="Core\PostDataSource.cs" />
+    <Compile Include="Models\Post.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Router.cs" />
@@ -64,8 +65,11 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Views\Home\Index.html" />
     <Content Include="Views\Posts\Details.html" />
+    <Content Include="Views\Posts\Index.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

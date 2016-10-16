@@ -1,21 +1,31 @@
-﻿<!DOCTYPE html>
+﻿@model MySimpleHttpServer.Models.Post
+<!DOCTYPE html>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
     <title></title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 </head>
 <body>
-<h1>Details</h1>
-<table>
-    <tr>
-        <td>Id</td>
-        <td>Name</td>
-    </tr>
-    <tr>
-        <td>1</td>
-        <td>Learning C#</td>
-    </tr>
-</table>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Details about @Model.Title</h1>
+                <table class="table table-bordered table-striped">
+                    <tr class="info">
+                        <td>Title</td>
+                        <td>Author</td>
+                        <td>Body</td>
+                    </tr>
+                    <tr>
+                        <td>@Model.Title</td>
+                        <td>@Model.Author</td>
+                        <td>@Model.Body</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
